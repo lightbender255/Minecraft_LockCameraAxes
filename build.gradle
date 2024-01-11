@@ -13,6 +13,7 @@ base {
     }
 
 // Mojang ships Java 17 to end users in 1.18+, so your mod should target Java 17.
+// LBFF - This is a 1.16 so we set it to "8"
 java.toolchain.languageVersion = JavaLanguageVersion.of(8)
 
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
@@ -139,20 +140,34 @@ dependencies {
 // A missing property will result in an error. Properties are expanded using ${} Groovy notation.
 // When "copyIdeResources" is enabled, this will also run before the game launches in IDE environments.
 // See https://docs.gradle.org/current/dsl/org.gradle.language.jvm.tasks.ProcessResources.html
-tasks.named('processResources', ProcessResources).configure {
-    var replaceProperties = [
-            minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
-            forge_version: forge_version, forge_version_range: forge_version_range,
-            loader_version_range: loader_version_range,
-            mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
-            mod_authors: mod_authors, mod_description: mod_description,
-    ]
-    inputs.properties replaceProperties
 
-    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
-        expand replaceProperties + [project: project]
+try {
+tasks.named('processResources', ProcessResources).configure {
+
+
+        var replaceProperties = [
+                minecraft_version   : minecraft_version, minecraft_version_range: minecraft_version_range,
+                forge_version       : forge_version, forge_version_range: forge_version_range,
+                loader_version_range: loader_version_range,
+                mod_id              : mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
+                mod_authors         : mod_authors, mod_description: mod_description,
+        ]
+        inputs.properties replaceProperties
+
+        filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+            expand replaceProperties + [project: project]
+        }
     }
 }
+catch(Exception e)
+{
+    // LBFF - DEBUG: Expansion for property copy not working
+    //System.out.println("Exception: " e);
+    //System.out.println("minecraft_version: " minecraft_version);
+    Logger.info ("minecraft_version: " minecraft_version);
+    // LBFF - DEBUG_END
+}
+
 
 // Example for how to get properties into the manifest for reading at runtime.
 tasks.named('jar', Jar).configure {
